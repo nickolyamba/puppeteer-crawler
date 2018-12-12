@@ -1,0 +1,4 @@
+{
+    "baseUrlForLinks": "INSERT-YOUR-BASE-URL-TO-GET-LINKS",
+    "urlsListQuery": "INSERT-YOUR-DOM_SELECTOR-THAT-TARGETS-URLS"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "puppeteer-crawler",
+  "version": "0.5.0",
+  "description": "Crawler based on puppeteer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --exec babel-node src/server.js",
+    "build": "babel src --out-dir dist",
+    "serve": "node dist/server.js",
+    "loc": "babel-node src/server.js"
+  },
+  "author": "ngoncharenko",
+  "license": "MIT",
+  "dependencies": {
+    "config": "^2.0.1",
+    "puppeteer": "^1.10.0",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/node": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.0.0",
+    "@babel/plugin-proposal-export-namespace-from": "^7.0.0",
+    "@babel/plugin-proposal-throw-expressions": "^7.0.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@babel/polyfill": "^7.0.0-beta.51",
+    "@babel/preset-env": "^7.1.6",
+    "chromedriver": "^2.43.3",
+    "webdriverio": "^4.14.0"
+  }
+}
