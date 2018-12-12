@@ -92,7 +92,7 @@ async function getEarningCalls(){
     let pageNum = 1;
     while(pageNum < PAGES_TO_READ){
         try{
-            // Get
+            // Get list of urls
             const earningUrls = await getUrlsList(pageNum);
             if(!Array.isArray(earningUrls) || earningUrls.length === 0){
                 console.log(`No earningUrls. pageNum: ${pageNum}`);
@@ -100,7 +100,7 @@ async function getEarningCalls(){
                 continue;
             }
 
-            for(let i = 0; i < 10; i += 1){
+            for(let i = 0; i < earningUrls.length; i += 1){
                 const earningCallUrl = earningUrls[i];
                 const earningCallBlob = await getEarningCallBlob(earningCallUrl);
                 parseEarningCall(earningCallBlob, pageNum, i, earningCallUrl);
