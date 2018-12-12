@@ -2,3 +2,4 @@ node_modules
 storage
 src/playground.js
 .idea
+dist
