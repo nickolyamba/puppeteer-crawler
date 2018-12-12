@@ -5,7 +5,7 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 
 const PAGES_TO_READ = 2000;
-let SLEEP_AFTER_EACH_PARSING = 5000;
+let SLEEP_AFTER_PAGE_PARSING = 5000;
 let SLEEP_BEFORE_NEXT_SOURCING = 60000 * 5;
 const { baseUrlForLinks, urlsListQuery } = config;
 
@@ -43,7 +43,9 @@ async function getUrlsList(pageNum){
 
     const response = await page.goto(`${baseUrlForLinks}/${pageNum}`, { waitUntil: 'networkidle2' });
     if(response.status() === 403){
-        SLEEP_BEFORE_NEXT_SOURCING *= 2
+        SLEEP_BEFORE_NEXT_SOURCING *= 2;
+        console.log(`Status Code = 403. pageNum: ${pageNum}. SLEEP_BEFORE_NEXT_SOURCING: ${SLEEP_BEFORE_NEXT_SOURCING/(1000*60)} min`);
+        return [];
     }
 
     const hrefs = await page.$$eval(urlsListQuery, entries => entries.map(a => a.href));
@@ -62,13 +64,14 @@ async function getEarningCallBlob(earningCallUrl){
 
     const response = await page.goto(`${earningCallUrl}?part=single`, { waitUntil: 'networkidle2' });
     if(response.status() === 403){
-        SLEEP_AFTER_EACH_PARSING *= 2
+        SLEEP_AFTER_PAGE_PARSING *= 2;
+        throw new Error(`Status Code = 403. SLEEP_AFTER_EACH_PARSING: ${SLEEP_AFTER_PAGE_PARSING/1000} s`);
     }
 
     const earningCallBlob = await page.evaluate(() => document.getElementById('a-cont').innerText);
     setTimeout(async () => {
         await browser.close();
-    }, SLEEP_AFTER_EACH_PARSING);
+    }, SLEEP_AFTER_PAGE_PARSING);
 
     return earningCallBlob;
 }
@@ -95,18 +98,24 @@ async function getEarningCalls(){
             // Get list of urls
             const earningUrls = await getUrlsList(pageNum);
             if(!Array.isArray(earningUrls) || earningUrls.length === 0){
-                console.log(`No earningUrls. pageNum: ${pageNum}`);
                 await sleep(SLEEP_BEFORE_NEXT_SOURCING);
                 continue;
             }
 
-            for(let i = 0; i < earningUrls.length; i += 1){
-                const earningCallUrl = earningUrls[i];
-                const earningCallBlob = await getEarningCallBlob(earningCallUrl);
-                parseEarningCall(earningCallBlob, pageNum, i, earningCallUrl);
-                console.log(`done page ${pageNum}\t link #${i+1}`);
+            let i = 0;
+            while(i < earningUrls.length){
+                try{
+                    const earningCallUrl = earningUrls[i];
+                    const earningCallBlob = await getEarningCallBlob(earningCallUrl);
+                    parseEarningCall(earningCallBlob, pageNum, i, earningCallUrl);
+                    console.log(`Done: page #${pageNum}\t link #${i+1}`);
+                    i += 1;
+                }
+                catch(ex){
+                    console.error(`[ERROR] > getEarningCalls. pageNum: ${pageNum}, link# ${i+1}\n${ex}`);
+                }
 
-                await sleep(SLEEP_AFTER_EACH_PARSING);
+                await sleep(SLEEP_AFTER_PAGE_PARSING);
             }
 
             await sleep(SLEEP_BEFORE_NEXT_SOURCING);
