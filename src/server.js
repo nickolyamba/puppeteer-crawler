@@ -5,8 +5,10 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 
 const PAGES_TO_READ = 2000;
-let SLEEP_AFTER_PAGE_PARSING = 5000;
-let SLEEP_BEFORE_NEXT_SOURCING = 60000 * 5;
+let SLEEP_AFTER_PAGE_PARSING = 10000;
+let SLEEP_BEFORE_NEXT_SOURCING = 60000 * 2;
+let browser = null;
+let baseUrlsPage = null;
 const { baseUrlForLinks, urlsListQuery } = config;
 
 const headers = {
@@ -21,10 +23,10 @@ async function sleep(time){
 }
 
 async function initChrome(){
-    const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+    browser = await puppeteer.launch({ headless: false, defaultViewport: null });
     const page = await browser.newPage();
 
-    return { page, browser };
+    return page;
 }
 
 async function blockJS(page){
@@ -38,28 +40,25 @@ async function blockJS(page){
 }
 
 async function getUrlsList(pageNum){
-    const { page, browser } = await initChrome();
-    await blockJS(page);
+    const prevPage = baseUrlsPage;
+    baseUrlsPage = browser ? await browser.newPage() : await initChrome();
+    if(prevPage) prevPage.close();
+    await blockJS(baseUrlsPage);
 
-    const response = await page.goto(`${baseUrlForLinks}/${pageNum}`, { waitUntil: 'networkidle2' });
+    const response = await baseUrlsPage.goto(`${baseUrlForLinks}/${pageNum}`, { waitUntil: 'networkidle2' });
     if(response.status() === 403){
         SLEEP_BEFORE_NEXT_SOURCING *= 2;
         console.log(`Status Code = 403. pageNum: ${pageNum}. SLEEP_BEFORE_NEXT_SOURCING: ${SLEEP_BEFORE_NEXT_SOURCING/(1000*60)} min`);
         return [];
     }
 
-    const hrefs = await page.$$eval(urlsListQuery, entries => entries.map(a => a.href));
-    // await page.screenshot({path: 'screenshotOfPage.png'});
+    const listOfLinks = await baseUrlsPage.$$eval(urlsListQuery, entries => entries.map(a => a.href));
 
-    setTimeout(async() =>{
-        await browser.close();
-    }, SLEEP_BEFORE_NEXT_SOURCING);
-
-    return hrefs;
+    return listOfLinks;
 }
 
 async function getEarningCallBlob(earningCallUrl){
-    const { page, browser } = await initChrome();
+    const page = await browser.newPage();
     await blockJS(page);
 
     const response = await page.goto(`${earningCallUrl}?part=single`, { waitUntil: 'networkidle2' });
@@ -70,7 +69,7 @@ async function getEarningCallBlob(earningCallUrl){
 
     const earningCallBlob = await page.evaluate(() => document.getElementById('a-cont').innerText);
     setTimeout(async () => {
-        await browser.close();
+        await page.close();
     }, SLEEP_AFTER_PAGE_PARSING);
 
     return earningCallBlob;
@@ -113,6 +112,7 @@ async function getEarningCalls(){
                 }
                 catch(ex){
                     console.error(`[ERROR] > getEarningCalls. pageNum: ${pageNum}, link# ${i+1}\n${ex}`);
+                    await sleep(SLEEP_BEFORE_NEXT_SOURCING);
                 }
 
                 await sleep(SLEEP_AFTER_PAGE_PARSING);
