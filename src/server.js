@@ -5,6 +5,7 @@ import path from 'path';
 import puppeteer from 'puppeteer';
 
 const PAGES_TO_READ = 2000;
+const STORAGE_DIR_PATH = '../storage';
 let SLEEP_AFTER_PAGE_PARSING = 10000;
 let SLEEP_BEFORE_NEXT_SOURCING = 60000 * 2;
 let browser = null;
@@ -17,6 +18,29 @@ const headers = {
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
     "cache-control": "no-cache"
 };
+
+function createDir(dirPath){
+    const storageDir = path.join(__dirname, dirPath);
+    try{
+        if (!fs.existsSync(storageDir)){
+            fs.mkdirSync(storageDir);
+        }
+
+        return true;
+    }
+    catch(ex){
+        console.error(`[ERROR] > createStorageDir. Error creating dir '${storageDir}'\n`, ex);
+    }
+
+    return false;
+}
+
+function createStorageDir(){
+    if(!createDir(STORAGE_DIR_PATH)){
+        console.error(`\nCan\'t start without a storage directory ${STORAGE_DIR_PATH}`);
+        process.exit();
+    }
+}
 
 async function sleep(time){
     return new Promise(resolve => setTimeout(resolve, time))
@@ -78,7 +102,7 @@ async function getEarningCallBlob(earningCallUrl){
 
 function parseEarningCall(earningCall, pageNum, iter, url){
     try{
-        const filePath = path.join(__dirname, `../storage/earningCall_${pageNum}_${iter}.txt`);
+        const filePath = path.join(__dirname, `${STORAGE_DIR_PATH}/earningCall_${pageNum}_${iter}.txt`);
         fs.writeFile(filePath, `${url}\n\n${earningCall}`, 'utf-8', (err) => {
             if(err){
                 console.error('[ERROR] > parseEarningCall ', err);
@@ -128,10 +152,7 @@ async function getEarningCalls(){
     }
 }
 
-const storageDir = path.join(__dirname, '../storage2');
-if (!fs.existsSync(storageDir)){
-    fs.mkdirSync(storageDir);
-}
+createStorageDir();
 
 getEarningCalls()
     .then()
