@@ -78,7 +78,8 @@ async function getEarningCallBlob(earningCallUrl){
 
 function parseEarningCall(earningCall, pageNum, iter, url){
     try{
-        fs.writeFile(path.join(__dirname, `../storage/earningCall_${pageNum}_${iter}.txt`), `${url}\n\n${earningCall}`, 'utf-8', (err, result) => {
+        const filePath = path.join(__dirname, `../storage/earningCall_${pageNum}_${iter}.txt`);
+        fs.writeFile(filePath, `${url}\n\n${earningCall}`, 'utf-8', (err) => {
             if(err){
                 console.error('[ERROR] > parseEarningCall ', err);
             }
@@ -125,6 +126,11 @@ async function getEarningCalls(){
             console.error(`[ERROR] > getEarningCalls > pageNum: ${pageNum}`, ex);
         }
     }
+}
+
+const storageDir = path.join(__dirname, '../storage2');
+if (!fs.existsSync(storageDir)){
+    fs.mkdirSync(storageDir);
 }
 
 getEarningCalls()
