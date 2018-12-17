@@ -6,6 +6,7 @@ import puppeteer from 'puppeteer';
 
 const PAGES_TO_READ = 5263;
 const STORAGE_DIR_PATH = '../storage';
+const DEFAULT_HEADING = 'NO HEADING';
 const PROXY_URL = null;
 let SLEEP_AFTER_PAGE_PARSING = 10000;
 let SLEEP_BEFORE_NEXT_SOURCING = 60000 * 2;
@@ -47,13 +48,15 @@ async function sleep(time){
     return new Promise(resolve => setTimeout(resolve, time))
 }
 
-async function logError(error, url) {
+function logError(error, url) {
     const filePath = path.join(__dirname, `${STORAGE_DIR_PATH}/errors.csv`);
-    fs.appendFile(filePath, `${error},${url}\n`, 'utf-8', (err) => {
+    fs.appendFile(filePath, `${error}\t${url}\n`, 'utf-8', (err) => {
         if(err){
             console.error('[ERROR] > logError ', err);
         }
     });
+
+    console.error(`${error}\t${url}\n`);
 }
 
 function setProxy(browserSettings) {
@@ -124,12 +127,22 @@ async function getEarningCallBlob(earningCallUrl){
         throw new Error(`Status Code = 403. SLEEP_AFTER_EACH_PARSING: ${SLEEP_AFTER_PAGE_PARSING/1000} s`);
     }
 
-    const earningCallBlob = await page.evaluate(() => document.getElementById('a-cont').innerText);
+    let heading = DEFAULT_HEADING;
+    try{
+        heading = await page.evaluate(() => document.getElementsByTagName('h1')[0].innerText);
+    }
+    catch(ex){
+        logError('Error reading heading', earningCallUrl);
+    }
+
+    const bodyText = await page.evaluate(() => document.getElementById('a-cont').innerText);
+    const earningCallText = `${heading}\n\n${bodyText}`;
+
     setTimeout(async () => {
         await page.close();
     }, SLEEP_AFTER_PAGE_PARSING);
 
-    return earningCallBlob;
+    return earningCallText;
 }
 
 
