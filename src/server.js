@@ -4,8 +4,9 @@ import request from 'request-promise';
 import path from 'path';
 import puppeteer from 'puppeteer';
 
-const PAGES_TO_READ = 2000;
+const PAGES_TO_READ = 5263;
 const STORAGE_DIR_PATH = '../storage';
+const PROXY_URL = null;
 let SLEEP_AFTER_PAGE_PARSING = 10000;
 let SLEEP_BEFORE_NEXT_SOURCING = 60000 * 2;
 let browser = null;
@@ -46,8 +47,40 @@ async function sleep(time){
     return new Promise(resolve => setTimeout(resolve, time))
 }
 
+async function logError(error, url) {
+    const filePath = path.join(__dirname, `${STORAGE_DIR_PATH}/errors.csv`);
+    fs.appendFile(filePath, `${error},${url}\n`, 'utf-8', (err) => {
+        if(err){
+            console.error('[ERROR] > logError ', err);
+        }
+    });
+}
+
+function setProxy(browserSettings) {
+    if(PROXY_URL){
+        const proxySetting = `--proxy-server=${PROXY_URL}`;
+        if(!Array.isArray(!browserSettings.args)){
+            browserSettings.args = [proxySetting]
+        }
+        else{
+            browserSettings.args.push(proxySetting);
+        }
+    }
+}
+
+function getBrowserSettins() {
+    const browserSettings = {
+        headless: false,
+        defaultViewport: null
+    };
+    setProxy(browserSettings);
+
+    return browserSettings;
+}
+
 async function initChrome(){
-    browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+    const browserSettings = getBrowserSettins();
+    browser = await puppeteer.launch(browserSettings);
     const page = await browser.newPage();
 
     return page;
