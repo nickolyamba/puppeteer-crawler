@@ -1,11 +1,14 @@
-import fs from 'fs';
 import config from 'config';
 import request from 'request-promise';
-import path from 'path';
 import puppeteer from 'puppeteer';
+import {
+    createStorageDir,
+    saveEarningCall,
+    saveUrls,
+    logError
+} from './utilities/storageUtils';
 
 const PAGES_TO_READ = 5263;
-const STORAGE_DIR_PATH = '../storage';
 const DEFAULT_HEADING = 'NO HEADING';
 const PROXY_URL = null;
 let SLEEP_AFTER_PAGE_PARSING = 10000;
@@ -21,42 +24,8 @@ const headers = {
     "cache-control": "no-cache"
 };
 
-function createDir(dirPath){
-    const storageDir = path.join(__dirname, dirPath);
-    try{
-        if (!fs.existsSync(storageDir)){
-            fs.mkdirSync(storageDir);
-        }
-
-        return true;
-    }
-    catch(ex){
-        console.error(`[ERROR] > createStorageDir. Error creating dir '${storageDir}'\n`, ex);
-    }
-
-    return false;
-}
-
-function createStorageDir(){
-    if(!createDir(STORAGE_DIR_PATH)){
-        console.error(`\nCan\'t start without a storage directory ${STORAGE_DIR_PATH}`);
-        process.exit();
-    }
-}
-
 async function sleep(time){
     return new Promise(resolve => setTimeout(resolve, time))
-}
-
-function logError(error, url) {
-    const filePath = path.join(__dirname, `${STORAGE_DIR_PATH}/errors.csv`);
-    fs.appendFile(filePath, `${error}\t${url}\n`, 'utf-8', (err) => {
-        if(err){
-            console.error('[ERROR] > logError ', err);
-        }
-    });
-
-    console.error(`${error}\t${url}\n`);
 }
 
 function setProxy(browserSettings) {
@@ -132,7 +101,7 @@ async function getEarningCallBlob(earningCallUrl){
         heading = await page.evaluate(() => document.getElementsByTagName('h1')[0].innerText);
     }
     catch(ex){
-        logError('Error reading heading', earningCallUrl);
+        logError('[ERROR] reading heading', earningCallUrl);
     }
 
     const bodyText = await page.evaluate(() => document.getElementById('a-cont').innerText);
@@ -146,38 +115,25 @@ async function getEarningCallBlob(earningCallUrl){
 }
 
 
-function parseEarningCall(earningCall, pageNum, iter, url){
-    try{
-        const filePath = path.join(__dirname, `${STORAGE_DIR_PATH}/earningCall_${pageNum}_${iter}.txt`);
-        fs.writeFile(filePath, `${url}\n\n${earningCall}`, 'utf-8', (err) => {
-            if(err){
-                console.error('[ERROR] > parseEarningCall ', err);
-            }
-        });
-    }
-    catch(ex){
-        console.error('[ERROR] > parseEarningCall', ex);
-    }
-}
-
-
 async function getEarningCalls(){
     let pageNum = 1;
     while(pageNum < PAGES_TO_READ){
         try{
             // Get list of urls
-            const earningUrls = await getUrlsList(pageNum);
-            if(!Array.isArray(earningUrls) || earningUrls.length === 0){
+            const urlsToCrawl = await getUrlsList(pageNum);
+            if(!Array.isArray(urlsToCrawl) || urlsToCrawl.length === 0){
                 await sleep(SLEEP_BEFORE_NEXT_SOURCING);
                 continue;
             }
 
+            saveUrls(urlsToCrawl);
+
             let i = 0;
-            while(i < earningUrls.length){
+            while(i < urlsToCrawl.length){
                 try{
-                    const earningCallUrl = earningUrls[i];
+                    const earningCallUrl = urlsToCrawl[i];
                     const earningCallBlob = await getEarningCallBlob(earningCallUrl);
-                    parseEarningCall(earningCallBlob, pageNum, i, earningCallUrl);
+                    saveEarningCall(earningCallBlob, pageNum, i, earningCallUrl);
                     console.log(`Done: page #${pageNum}\t link #${i+1}`);
                     i += 1;
                 }
