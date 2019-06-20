@@ -1,5 +1,4 @@
 import config from 'config';
-import request from 'request-promise';
 import puppeteer from 'puppeteer';
 import {
     createStorageDir,
@@ -18,8 +17,7 @@ let baseUrlsPage = null;
 const { baseUrlForLinks, urlsListQuery } = config;
 
 const headers = {
-    // "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36",
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
     "cache-control": "no-cache"
 };
@@ -86,7 +84,7 @@ async function getUrlsList(pageNum){
     return listOfLinks;
 }
 
-async function getEarningCallBlob(earningCallUrl){
+async function getEarningCallText(earningCallUrl){
     const page = await browser.newPage();
     await blockJS(page);
 
@@ -132,8 +130,8 @@ async function getEarningCalls(){
             while(i < urlsToCrawl.length){
                 try{
                     const earningCallUrl = urlsToCrawl[i];
-                    const earningCallBlob = await getEarningCallBlob(earningCallUrl);
-                    saveEarningCall(earningCallBlob, pageNum, i, earningCallUrl);
+                    const earningCallText = await getEarningCallText(earningCallUrl);
+                    saveEarningCall(earningCallText, pageNum, i, earningCallUrl);
                     console.log(`Done: page #${pageNum}\t link #${i+1}`);
                     i += 1;
                 }
@@ -157,6 +155,10 @@ async function getEarningCalls(){
 createStorageDir();
 
 getEarningCalls()
-    .then()
-    .catch(ex => { console.error('[ERROR] > getEarningCalls()', ex); });
+    .then(() => {
+        console.log('Finished Crawling');
+    })
+    .catch(ex => {
+        console.error('[ERROR] > getEarningCalls()', ex);
+    });
 
