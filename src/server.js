@@ -31,7 +31,7 @@ async function sleep(time){
 function setProxy(browserSettings) {
     if(PROXY_URL){
         const proxySetting = `--proxy-server=${PROXY_URL}`;
-        if(!Array.isArray(!browserSettings.args)){
+        if(!Array.isArray(browserSettings.args)){
             browserSettings.args = [proxySetting]
         }
         else{
