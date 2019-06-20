@@ -5,29 +5,29 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --exec babel-node src/server.js",
-    "build": "babel src --out-dir dist",
-    "serve": "node dist/server.js",
-    "loc": "babel-node src/server.js"
+    "start": "babel-node ./src/server.js",
+    "build": "babel src --out-dir ./dist",
+    "serve": "node ./dist/server.js",
+    "loc": "nodemon --exec babel-node ./src/server.js"
   },
   "author": "ngoncharenko",
   "license": "MIT",
   "dependencies": {
+    "@babel/runtime": "^7.4.5",
     "config": "^2.0.1",
-    "puppeteer": "^1.10.0",
-    "request-promise": "^4.2.2"
+    "puppeteer": "^1.17.0",
+    "request-promise": "^4.2.4"
   },
   "devDependencies": {
-    "@babel/cli": "^7.1.5",
-    "@babel/core": "^7.1.6",
-    "@babel/node": "^7.0.0",
-    "@babel/plugin-proposal-class-properties": "^7.0.0",
-    "@babel/plugin-proposal-export-namespace-from": "^7.0.0",
-    "@babel/plugin-proposal-throw-expressions": "^7.0.0",
-    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
-    "@babel/polyfill": "^7.0.0-beta.51",
-    "@babel/preset-env": "^7.1.6",
-    "chromedriver": "^2.43.3",
-    "webdriverio": "^4.14.0"
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/node": "^7.4.5",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/plugin-transform-runtime": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "chromedriver": "^75.0.0",
+    "webdriverio": "^5.10.7"
   }
 }
